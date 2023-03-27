@@ -8,7 +8,7 @@ const StepContext = () => {
     const [userData, setUserData] = useState({
         state: '',
         company: '',
-        country: [],
+        country: '',
         client: [],
         address: '',
         projectName: '',

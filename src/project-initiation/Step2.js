@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 
 import {
     Box,
@@ -19,12 +19,15 @@ import {
     FormControlLabel,
     Radio,
     Chip,
-    Avatar
+    Avatar,
+    Checkbox,
+    ListItemText
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import Textarea from '@mui/joy/Textarea';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import CancelIcon from '@mui/icons-material/Cancel';
+import ListItemIcon from "@material-ui/core/ListItemIcon";
 import _without from "lodash/without";
 import IconButton from '@mui/material/IconButton';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -32,6 +35,10 @@ import { deepOrange, deepPurple } from '@mui/material/colors';
 
 import { projectInitiaonMock } from './mock';
 import { multiStepContext } from '../StepContext';
+import axios from 'axios';
+import { MenuProps1, useStyles, options } from "./utils";
+// import CountryData from 'country-data';
+
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -68,11 +75,51 @@ function getStyles(name, personName, theme) {
 
 
 const Step2 = () => {
-
+    // console.log('CountryData : ', CountryData.countries)
     const { phaseData } = projectInitiaonMock;
     const theme = useTheme();
-
+    const classes = useStyles();
+    const [projectDomain, setProjectDomain] = useState([]);
+    const [projectType, setProjectType] = useState([]);
+    const [projectLifeCycleModel, setProjectLifeCycleModel] = useState([]);
+    const [parameters, setParameters] = useState([]);
+    const [primaryTeckStack, setPrimaryTeckStack] = useState([]);
+    const [secondaryTeckStack, setSecondaryTeckStack] = useState([]);
+    const [addSubProject, setAddSubProject] = useState([]);
     const { userData, setUserData } = useContext(multiStepContext);
+
+    // const {
+    //     state = '',
+    //     company = '',
+    //     country = '',
+    //     client = [],
+    //     address = '',
+    //     projectName = '',
+    //     phase = '',
+    //     projectType = '',
+    //     governanceModel = '',
+    //     projectLifeCycleModel = [],
+    //     projectDomain = [],
+    //     parameters = [],
+    //     addSubProject = [],
+    //     primaryTeckStack = [],
+    //     secondaryTeckStack = [],
+    //     accountManagers = [],
+    //     projectManagers = [],
+    //     sowYes = false,
+    //     sowNo = false,
+    //     summary = '',
+    //     startDate = '',
+    //     endDate = '',
+    //     noOfDays = '',
+    //     totalApprovedHours = '',
+    //     redmin = false,
+    //     zira = false,
+    //     tracker = false,
+    //     monthly = false,
+    //     hourly = false,
+    //     fortnightly = false
+    // } = userData;
 
     const handleChange = (event) => {
 
@@ -86,12 +133,30 @@ const Step2 = () => {
         });
     };
 
-    const handleDelete = (event, val, key) => {
-        const filteredArray = userData[key].filter(e => e !== val)
+    const handleSubProjectChange = (event) => {
+        const value = event.target.value;
         setUserData({
             ...userData,
-            [key]: filteredArray
+            ['addSubProject']: value
         });
+    };
+
+    const handleDelete = (event, val, key) => {
+        // console.log('val : ', val)
+        if (key === 'addSubProject') {
+            const filteredArray = userData[key].filter(e => e.uuid !== val.uuid)
+            setUserData({
+                ...userData,
+                [key]: filteredArray
+            });
+        }
+        else {
+            const filteredArray = userData[key].filter(e => e.id !== val.id)
+            setUserData({
+                ...userData,
+                [key]: filteredArray
+            });
+        }
     };
 
     const handleRadioButton = (key) => {
@@ -111,6 +176,61 @@ const Step2 = () => {
             [key]: "",
         });
     };
+
+    useEffect(() => {
+        const baseURL = "https://test.resource-api.writso.com/v1";
+        let tokenStr = "eyJhbGciOiJSUzI1NiIsImtpZCI6Ijk3OWVkMTU1OTdhYjM1Zjc4MjljZTc0NDMwN2I3OTNiN2ViZWIyZjAiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU2F0aXNoIEt1bWFyIFBhdGVsIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FHTm15eGJSMkJEZEV6RGtwVTZNbzhralFGUGNnd1VxZUFSTkJYSVd0VW5sPXM5Ni1jIiwiaXNzIjoiaHR0cHM6Ly9zZWN1cmV0b2tlbi5nb29nbGUuY29tL3Jlc291cmNlLWF2YWlhYmlsaXR5IiwiYXVkIjoicmVzb3VyY2UtYXZhaWFiaWxpdHkiLCJhdXRoX3RpbWUiOjE2Nzk4MjQwODYsInVzZXJfaWQiOiJod1RabzlCdE5PYUFZc2hZM1BORGFWMFZpd28yIiwic3ViIjoiaHdUWm85QnROT2FBWXNoWTNQTkRhVjBWaXdvMiIsImlhdCI6MTY3OTgyNDA4NiwiZXhwIjoxNjc5ODI3Njg2LCJlbWFpbCI6InNhdGlzaC5wYXRlbEBzdWNjZXNzaXZlLnRlY2giLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJnb29nbGUuY29tIjpbIjExNDA2NDQ1NjA3NjcyNTgyNTk5NCJdLCJlbWFpbCI6WyJzYXRpc2gucGF0ZWxAc3VjY2Vzc2l2ZS50ZWNoIl19LCJzaWduX2luX3Byb3ZpZGVyIjoiZ29vZ2xlLmNvbSJ9fQ.VwZ8AHjprmyleYETO0U0RkZncjCOovxAfI3TUBnV24szebdVc8iCtifI_LXAx2A55OdlUpiz_19z6Hx_Q7txsVZjwuM26MNewDgnKiFEL7Axppevvjt_n5EtVTXGpdsCT9NRBfXkZeHjvFxG9UoZJUbJ4HvmzcABoQdCi1ozeKWJE1lHHv0lxEJojoWANa6NktcAvN4dUG1nISayOm95f6GApM-GCEO7nZ4X2SidnEQcLCs0tVmhchVs6rzlAmW_K3mVCbCO5lAm56Z1z56aEu0Vh8xkC__HCrTscbAffBBWCXzoxb3HIwnBBekWDqncLx7YWx5TMX3q5t1l4TGURA"
+        axios.get(`${baseURL}/project-domain`,
+            {
+                headers: { "Authorization": tokenStr }
+            }).then((response) => {
+                setProjectDomain(response?.data?.data || []);
+            });
+
+        axios.get(`${baseURL}/billing-type`,
+            {
+                headers: { "Authorization": tokenStr }
+            }).then((response) => {
+                setProjectType(response?.data?.data || []);
+            });
+
+        axios.get(`${baseURL}/lifecycle-model`,
+            {
+                headers: { "Authorization": tokenStr }
+            }).then((response) => {
+                setProjectLifeCycleModel(response?.data?.data || []);
+            });
+
+        axios.get(`${baseURL}/project-parameter`,
+            {
+                headers: { "Authorization": tokenStr }
+            }).then((response) => {
+                setParameters(response?.data?.data || []);
+            });
+
+        axios.get(`${baseURL}/primary-technology`,
+            {
+                headers: { "Authorization": tokenStr }
+            }).then((response) => {
+                setPrimaryTeckStack(response?.data?.data || []);
+            });
+
+        axios.get(`${baseURL}/secondary-technology`,
+            {
+                headers: { "Authorization": tokenStr }
+            }).then((response) => {
+                setSecondaryTeckStack(response?.data?.data || []);
+            });
+
+        axios.get(`${baseURL}/project-listings`,
+            {
+                headers: { "Authorization": tokenStr }
+            }).then((response) => {
+                setAddSubProject(response?.data?.data || []);
+            });
+    }, []);
+
+    console.log('addSubProject : ', userData.addSubProject);
 
     return (
         <>
@@ -135,38 +255,35 @@ const Step2 = () => {
                         fullWidth
                     />
                     <FormControl sx={{ m: 1, width: '48%' }} required>
-                        <InputLabel id="demo-multiple-name-label">Phase </InputLabel>
+                        <InputLabel id="demo-multiple-phase-label">Phase </InputLabel>
                         <Select
-                            labelId="demo-multiple-name-label"
-                            id="demo-multiple-name"
+                            labelId="demo-multiple-phase-label"
+                            id="demo-multiple-phase"
                             // multiple
                             value={userData.phase}
                             name="phase"
-                            displayEmpty
+                            // displayEmpty
                             onChange={handleChange}
                             input={<OutlinedInput label="Phase" />}
                             MenuProps={MenuProps}
                             endAdornment={<IconButton
                                 sx={{ visibility: userData.phase.length ? "visible" : "hidden" }} onClick={(e) => handleClearClick('phase')}><ClearIcon />
                             </IconButton>}
+                            displayEmpty={true ? <Typography>dd</Typography> : ''}
                         >
-                            {
-                                phaseData.map((itm) => (
-                                    <MenuItem
-                                        key={itm.name}
-                                        value={itm.name}
-                                        style={getStyles(itm.name, userData, theme)}
-                                    >
-                                        {itm.name}
-                                    </MenuItem>
-                                ))
+                            {phaseData?.length ? phaseData.map((itm) => (
+                                <MenuItem
+                                    key={itm.name}
+                                    value={itm.name}
+                                    style={getStyles(itm.name, userData, theme)}
+                                >
+                                    {itm.name}
+                                </MenuItem>
+                            )) :
+                                <MenuItem disabled>
+                                    No data available
+                                </MenuItem>
                             }
-                            {/* <Button
-                                color='success'
-                                variant='contained'
-                            >
-                                Close
-                            </Button> */}
                         </Select>
                     </FormControl>
                     <FormControl sx={{ m: 1, width: '48%' }} required>
@@ -185,15 +302,19 @@ const Step2 = () => {
                                 sx={{ visibility: userData.projectType ? "visible" : "hidden" }} onClick={(e) => handleClearClick('projectType')}><ClearIcon />
                             </IconButton>}
                         >
-                            {names.map((name) => (
+                            {projectType?.length ? projectType.map((itm) => (
                                 <MenuItem
-                                    key={name}
-                                    value={name}
-                                    style={getStyles(name, userData, theme)}
+                                    key={itm.name}
+                                    value={itm.name}
+                                    style={getStyles(itm.name, userData, theme)}
                                 >
-                                    {name}
+                                    {itm.name}
                                 </MenuItem>
-                            ))}
+                            )) :
+                                <MenuItem disabled>
+                                    No data available
+                                </MenuItem>
+                            }
                         </Select>
                     </FormControl>
                     <FormControl sx={{ m: 1, width: '48%' }} required>
@@ -211,7 +332,7 @@ const Step2 = () => {
                                 sx={{ visibility: userData.governanceModel ? "visible" : "hidden" }} onClick={(e) => handleClearClick('governanceModel')}><ClearIcon />
                             </IconButton>}
                         >
-                            {names.map((name) => (
+                            {names?.length ? names.map((name) => (
                                 <MenuItem
                                     key={name}
                                     value={name}
@@ -219,7 +340,11 @@ const Step2 = () => {
                                 >
                                     {name}
                                 </MenuItem>
-                            ))}
+                            )) :
+                                <MenuItem disabled>
+                                    No data available
+                                </MenuItem>
+                            }
                         </Select>
                     </FormControl>
                     <FormControl sx={{ m: 1, width: '48%' }}>
@@ -237,15 +362,19 @@ const Step2 = () => {
                                 sx={{ visibility: userData.projectLifeCycleModel.length ? "visible" : "hidden" }} onClick={(e) => handleClearClick('projectLifeCycleModel')}><ClearIcon />
                             </IconButton>}
                         >
-                            {names.map((name) => (
+                            {projectLifeCycleModel?.length ? projectLifeCycleModel.map((itm) => (
                                 <MenuItem
-                                    key={name}
-                                    value={name}
-                                    style={getStyles(name, userData, theme)}
+                                    key={itm.name}
+                                    value={itm}
+                                    style={getStyles(itm.name, userData, theme)}
                                 >
-                                    {name}
+                                    {itm.name}
                                 </MenuItem>
-                            ))}
+                            )) :
+                                <MenuItem disabled>
+                                    No data available
+                                </MenuItem>
+                            }
                         </Select>
                     </FormControl>
                     <FormControl sx={{ m: 1, width: '48%' }} required>
@@ -261,11 +390,12 @@ const Step2 = () => {
                             MenuProps={MenuProps}
                             renderValue={(selected) => (
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                    {selected.map((value) => (
+                                    {selected.map((item) => (
                                         <Chip
-                                            key={value}
-                                            label={value}
-                                            onDelete={(e) => handleDelete(e, value, 'projectDomain')}
+                                            key={item.name}
+                                            label={item.name}
+                                            color="primary"
+                                            onDelete={(e) => handleDelete(e, item, 'projectDomain')}
                                             deleteIcon={
                                                 <CancelIcon
                                                     onMouseDown={(event) => event.stopPropagation()}
@@ -277,15 +407,19 @@ const Step2 = () => {
                                 </Box>
                             )}
                         >
-                            {names.map((name) => (
+                            {projectDomain?.length ? projectDomain.map((itm) => (
                                 <MenuItem
-                                    key={name}
-                                    value={name}
-                                    style={getStyles(name, userData, theme)}
+                                    key={itm.name}
+                                    value={itm}
+                                    style={getStyles(itm.name, userData, theme)}
                                 >
-                                    {name}
+                                    {itm.name}
                                 </MenuItem>
-                            ))}
+                            )) :
+                                <MenuItem disabled>
+                                    No data available
+                                </MenuItem>
+                            }
                         </Select>
                     </FormControl>
                     <FormControl sx={{ m: 1, width: '48%' }} required>
@@ -301,55 +435,82 @@ const Step2 = () => {
                             MenuProps={MenuProps}
                             renderValue={(selected) => (
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                    {selected.map((value) => (
+                                    {selected.map((item) => (
                                         <Chip
-                                            key={value}
-                                            onDelete={(e) => handleDelete(e, value, 'parameters')}
+                                            key={item.name}
+                                            label={item.name}
+                                            color="primary"
+                                            onDelete={(e) => handleDelete(e, item, 'parameters')}
                                             deleteIcon={
                                                 <CancelIcon
                                                     onMouseDown={(event) => event.stopPropagation()}
                                                 />
                                             }
                                             onClick={(e) => handleDelete()}
-                                            label={value}
                                         />
                                     ))}
                                 </Box>
                             )}
                         >
-                            {names.map((name) => (
+                            {parameters?.length ? parameters.map((itm) => (
                                 <MenuItem
-                                    key={name}
-                                    value={name}
-                                    style={getStyles(name, userData, theme)}
+                                    key={itm.name}
+                                    value={itm}
+                                    style={getStyles(itm.name, userData, theme)}
                                 >
-                                    {name}
+                                    {itm.name}
                                 </MenuItem>
-                            ))}
+                            )) :
+                                <MenuItem disabled>
+                                    No data available
+                                </MenuItem>
+                            }
                         </Select>
                     </FormControl>
-                    <FormControl sx={{ m: 1, width: '48%' }} required>
-                        <InputLabel id="demo-multiple-name-label">Add Sub - Project</InputLabel>
+                    <FormControl className={classes.formControl} sx={{ m: 1, width: '48%' }} required>
+                        <InputLabel id="mutiple-select-label">Add Sub - Project</InputLabel>
                         <Select
-                            labelId="demo-multiple-name-label"
-                            id="demo-multiple-name"
+                            labelId="mutiple-select-label"
                             multiple
-                            disabled
                             value={userData.addSubProject}
-                            name="addSubProject"
-                            onChange={handleChange}
+                            onChange={handleSubProjectChange}
                             input={<OutlinedInput label="Add Sub - Project" />}
-                            MenuProps={MenuProps}
+                            MenuProps={MenuProps1}
+                            renderValue={(selected) => (
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {selected.map((item) => (
+                                        <Chip
+                                            key={item.project_name}
+                                            label={item.project_name}
+                                            color="primary"
+                                            onDelete={(e) => handleDelete(e, item, 'addSubProject')}
+                                            deleteIcon={
+                                                <CancelIcon
+                                                    onMouseDown={(event) => event.stopPropagation()}
+                                                />
+                                            }
+                                            onClick={(e) => handleDelete()}
+                                        />
+                                    ))}
+                                </Box>
+                            )}
                         >
-                            {names.map((name) => (
+                            {addSubProject?.length ? addSubProject.map((itm) => (
                                 <MenuItem
-                                    key={name}
-                                    value={name}
-                                    style={getStyles(name, userData, theme)}
+                                    key={itm.project_name}
+                                    value={itm}
+                                    style={getStyles(itm.project_name, userData, theme)}
                                 >
-                                    {name}
+                                    <ListItemIcon>
+                                        <Checkbox checked={userData.addSubProject.indexOf(itm) > -1} />
+                                    </ListItemIcon>
+                                    <ListItemText primary={itm.project_name} />
                                 </MenuItem>
-                            ))}
+                            )) :
+                                <MenuItem disabled>
+                                    No data available
+                                </MenuItem>
+                            }
                         </Select>
                     </FormControl>
                     <FormControl sx={{ m: 1, width: '48%' }} required>
@@ -365,11 +526,12 @@ const Step2 = () => {
                             MenuProps={MenuProps}
                             renderValue={(selected) => (
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                    {selected.map((value) => (
+                                    {selected.map((item) => (
                                         <Chip
-                                            key={value}
-                                            label={value}
-                                            onDelete={(e) => handleDelete(e, value, 'primaryTeckStack')}
+                                            key={item.name}
+                                            label={item.name}
+                                            color="primary"
+                                            onDelete={(e) => handleDelete(e, item, 'primaryTeckStack')}
                                             deleteIcon={
                                                 <CancelIcon
                                                     onMouseDown={(event) => event.stopPropagation()}
@@ -381,15 +543,19 @@ const Step2 = () => {
                                 </Box>
                             )}
                         >
-                            {names.map((name) => (
+                            {primaryTeckStack?.length ? primaryTeckStack.map((itm) => (
                                 <MenuItem
-                                    key={name}
-                                    value={name}
-                                    style={getStyles(name, userData, theme)}
+                                    key={itm.name}
+                                    value={itm}
+                                    style={getStyles(itm.name, userData, theme)}
                                 >
-                                    {name}
+                                    {itm.name}
                                 </MenuItem>
-                            ))}
+                            )) :
+                                <MenuItem disabled>
+                                    No data available
+                                </MenuItem>
+                            }
                         </Select>
                     </FormControl>
                     <FormControl sx={{ m: 1, width: '48%' }} required>
@@ -405,11 +571,12 @@ const Step2 = () => {
                             MenuProps={MenuProps}
                             renderValue={(selected) => (
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                    {selected.map((value) => (
+                                    {selected.map((item) => (
                                         <Chip
-                                            key={value}
-                                            label={value}
-                                            onDelete={(e) => handleDelete(e, value, 'secondaryTeckStack')}
+                                            key={item.name}
+                                            label={item.name}
+                                            color="primary"
+                                            onDelete={(e) => handleDelete(e, item, 'secondaryTeckStack')}
                                             deleteIcon={
                                                 <CancelIcon
                                                     onMouseDown={(event) => event.stopPropagation()}
@@ -421,15 +588,19 @@ const Step2 = () => {
                                 </Box>
                             )}
                         >
-                            {names.map((name) => (
+                            {secondaryTeckStack?.length ? secondaryTeckStack.map((itm) => (
                                 <MenuItem
-                                    key={name}
-                                    value={name}
-                                    style={getStyles(name, userData, theme)}
+                                    key={itm.name}
+                                    value={itm}
+                                    style={getStyles(itm.name, userData, theme)}
                                 >
-                                    {name}
+                                    {itm.name}
                                 </MenuItem>
-                            ))}
+                            )) :
+                                <MenuItem disabled>
+                                    No data available
+                                </MenuItem>
+                            }
                         </Select>
                     </FormControl>
                     <FormControl sx={{ m: 1, width: '48%' }} required>
@@ -468,7 +639,7 @@ const Step2 = () => {
                                 </Box>
                             )}
                         >
-                            {phaseData.map((itm) => (
+                            {phaseData?.length ? phaseData.map((itm) => (
                                 <MenuItem
                                     key={itm.name}
                                     value={itm.name}
@@ -481,7 +652,11 @@ const Step2 = () => {
                                         <Typography variant='caption'>{itm.email}</Typography>
                                     </div>
                                 </MenuItem>
-                            ))}
+                            )) :
+                                <MenuItem disabled>
+                                    No data available
+                                </MenuItem>
+                            }
                         </Select>
                     </FormControl>
                     <FormControl sx={{ m: 1, width: '48%' }} required>
@@ -520,7 +695,7 @@ const Step2 = () => {
                                 </Box>
                             )}
                         >
-                            {phaseData.map((itm) => (
+                            {phaseData?.length ? phaseData.map((itm) => (
                                 <MenuItem
                                     key={itm.name}
                                     value={itm.name}
@@ -533,7 +708,11 @@ const Step2 = () => {
                                         <Typography variant='caption'>{itm.email}</Typography>
                                     </div>
                                 </MenuItem>
-                            ))}
+                            )) :
+                                <MenuItem disabled>
+                                    No data available
+                                </MenuItem>
+                            }
                         </Select>
                     </FormControl>
                     <FormControl sx={{ m: 1, width: '48%' }} required>

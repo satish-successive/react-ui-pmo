@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-
+import dayjs from 'dayjs';
 import {
     Box,
     Stepper,
@@ -29,42 +29,11 @@ import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
+import moment from 'moment';
+
 import { projectInitiaonMock } from './mock';
 import { multiStepContext } from '../StepContext';
-
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-    PaperProps: {
-        style: {
-            maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-            width: 250,
-        },
-    },
-};
-const names = [
-    'Oliver Hansen',
-    'Van Henry',
-    'April Tucker',
-    'Ralph Hubbard',
-    'Omar Alexander',
-    'Carlos Abbott',
-    'Miriam Wagner',
-    'Bradley Wilkerson',
-    'Virginia Andrews',
-    'Kelly Snyder',
-];
-
-function getStyles(name, personName, theme) {
-    // console.log('name : ', name)
-    return {
-        fontWeight: theme.typography.fontWeightMedium,
-    };
-}
-//personName.indexOf(name) === -1
-// ? theme.typography.fontWeightRegular
-// : theme.typography.fontWeightMedium,
-
 
 const Step3 = () => {
     const { phaseData } = projectInitiaonMock;
@@ -133,6 +102,12 @@ const Step3 = () => {
             [key]: true,
         });
     }
+    const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
+    const firstDate = new Date(2008, 1, 22);
+    const secondDate = new Date(2008, 1, 12);
+    const diffDays = Math.round(Math.abs((firstDate - secondDate) / oneDay));
+    let diff = Math.floor((Date.parse('13/03/2023') - Date.parse('10/03/2023')) / 86400000);
+    console.log('difffff : ', diffDays)
 
 
     return (
@@ -147,12 +122,15 @@ const Step3 = () => {
                     autoComplete="off"
                 >
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        {/* <DemoContainer components={['DatePicker']}> */}
                         <DatePicker
-                            required
                             label="Start Date *"
+                            input
+                            defaultValue={dayjs('2022-04-17')}
                             value={userData.startDate}
                             onChange={(newValue) => handleChange(newValue, 'startDate')}
                         />
+                        {/* </DemoContainer> */}
                     </LocalizationProvider>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker

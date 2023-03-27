@@ -25,27 +25,22 @@ import {
     DialogTitle,
     DialogContent,
     DialogContentText,
-    DialogActions
+    DialogActions,
+    Avatar
 } from '@mui/material';
 
 import ImageList from '@mui/material/ImageList';
 import ImageListItem from '@mui/material/ImageListItem';
+import { makeStyles } from '@material-ui/core/styles';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import { styled } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
+// import { Formik, Form } from 'formik';
+import schema from './schema';
 
-const BootstrapDialog = styled(Dialog)(({ theme }) => ({
-    '& .MuiDialogContent-root': {
-        padding: theme.spacing(2),
-    },
-    '& .MuiDialogActions-root': {
-        padding: theme.spacing(1),
-    },
-}));
-
-
-function BootstrapDialogTitle(props) {
+const BootstrapDialogTitle = (props) => {
     const { children, onClose, ...other } = props;
 
     return (
@@ -69,6 +64,21 @@ function BootstrapDialogTitle(props) {
     );
 }
 
+const useStyles = makeStyles((theme) => ({
+    root: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+    },
+    input: {
+        display: 'none',
+    },
+    avatar: {
+        width: theme.spacing(100),
+        height: theme.spacing(100),
+    },
+}));
+
 BootstrapDialogTitle.propTypes = {
     children: PropTypes.node,
     onClose: PropTypes.func.isRequired,
@@ -81,8 +91,21 @@ const AddClientDialog = (props) => {
         middleName: "",
         lastName: "",
         designation: "",
-        email: ""
+        email: "",
+        touched: {
+            firstName: false,
+            lastName: false,
+            designation: false,
+            email: false,
+        }
     });
+
+    const classes = useStyles();
+    const [avatar, setAvatar] = useState('');
+
+    const handleAvatarChange = (event) => {
+        setAvatar(URL.createObjectURL(event.target.files[0]));
+    };
 
     const {
         openDialog,
@@ -94,35 +117,64 @@ const AddClientDialog = (props) => {
         const {
             target: { value },
         } = event;
-        setDialogData((prevState) => {
-            return ({
-                ...prevState,
-                [key]: value,
-            });
+        setDialogData({
+            ...dialogData,
+            [key]: value
         });
     };
 
-    const handleSubmit = (inputData) => {
-        console.log('inside handleSubmit inputData : ', inputData);
+    const hasErrors = () => {
+        try {
+            schema.validateSync(dialogData);
+        } catch (err) {
+            return true;
+        }
+        return false;
+    };
+
+    const getError = (field) => {
+        const { touched } = dialogData;
+        if (touched[field] && hasErrors()) {
+            try {
+                schema.validateSyncAt(field, dialogData);
+                return false;
+            } catch (err) {
+                return err.message;
+            }
+        }
+    };
+
+    const isTouched = (field) => {
+        const { touched } = dialogData;
+        setDialogData({
+            ...dialogData,
+            touched: {
+                ...touched,
+                [field]: true,
+            },
+        });
+    };
+    const handleSubmit = () => {
         const {
             firstName = "",
             middleName = "",
             lastName = "",
             designation = "",
             email = ""
-        } = inputData;
+        } = dialogData;
         const data = {
             name: `${firstName} ${middleName} ${lastName}`,
             email: email,
             designation: designation
         };
         const baseURL = "https://test.resource-api.writso.com/v1/client";
-        let tokenStr = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlOTczZWUwZTE2ZjdlZWY0ZjkyMWQ1MGRjNjFkNzBiMmVmZWZjMTkiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU2F0aXNoIEt1bWFyIFBhdGVsIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FHTm15eGJSMkJEZEV6RGtwVTZNbzhralFGUGNnd1VxZUFSTkJYSVd0VW5sPXM5Ni1jIiwiaXNzIjoiaHR0cHM6Ly9zZWN1cmV0b2tlbi5nb29nbGUuY29tL3Jlc291cmNlLWF2YWlhYmlsaXR5IiwiYXVkIjoicmVzb3VyY2UtYXZhaWFiaWxpdHkiLCJhdXRoX3RpbWUiOjE2Nzk2NDA4OTIsInVzZXJfaWQiOiJod1RabzlCdE5PYUFZc2hZM1BORGFWMFZpd28yIiwic3ViIjoiaHdUWm85QnROT2FBWXNoWTNQTkRhVjBWaXdvMiIsImlhdCI6MTY3OTY0MDg5MiwiZXhwIjoxNjc5NjQ0NDkyLCJlbWFpbCI6InNhdGlzaC5wYXRlbEBzdWNjZXNzaXZlLnRlY2giLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJnb29nbGUuY29tIjpbIjExNDA2NDQ1NjA3NjcyNTgyNTk5NCJdLCJlbWFpbCI6WyJzYXRpc2gucGF0ZWxAc3VjY2Vzc2l2ZS50ZWNoIl19LCJzaWduX2luX3Byb3ZpZGVyIjoiZ29vZ2xlLmNvbSJ9fQ.VW4GRLMItirytnmwtasAX8mDXiYu4R_RfteZ2LLqFx3Zpj40xrSoGYcAJN6tANEj5x4J63xPAgFVP65--vNtWemOfrmGeeWHfx2LZU7zcwBUDCMu6Ey2OiOmLpWxUKpDWCVRAn2uN1ApDvtgn-3YxJSCQvF4zkI5tVq9t-r_gmQyfMk15-9XPtOy87hD8bgfLeGVWzGThZYnePnYFQjFL5eElNFdyEygdvXNoZOe1eGY6lfXH7Ks_R0lB2RiY3aqchpD8JZTMe5bMxhgMCiSHu9-VsyshoVdvKy7gbNMrTD4Vt7DlHh6SIRqmur2jmf_sViAqKzNjy3yjCCfV3Wrzg";
+        let tokenStr = "eyJhbGciOiJSUzI1NiIsImtpZCI6Ijk3OWVkMTU1OTdhYjM1Zjc4MjljZTc0NDMwN2I3OTNiN2ViZWIyZjAiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU2F0aXNoIEt1bWFyIFBhdGVsIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FHTm15eGJSMkJEZEV6RGtwVTZNbzhralFGUGNnd1VxZUFSTkJYSVd0VW5sPXM5Ni1jIiwiaXNzIjoiaHR0cHM6Ly9zZWN1cmV0b2tlbi5nb29nbGUuY29tL3Jlc291cmNlLWF2YWlhYmlsaXR5IiwiYXVkIjoicmVzb3VyY2UtYXZhaWFiaWxpdHkiLCJhdXRoX3RpbWUiOjE2Nzk3NDk4ODcsInVzZXJfaWQiOiJod1RabzlCdE5PYUFZc2hZM1BORGFWMFZpd28yIiwic3ViIjoiaHdUWm85QnROT2FBWXNoWTNQTkRhVjBWaXdvMiIsImlhdCI6MTY3OTc0OTg4NywiZXhwIjoxNjc5NzUzNDg3LCJlbWFpbCI6InNhdGlzaC5wYXRlbEBzdWNjZXNzaXZlLnRlY2giLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJnb29nbGUuY29tIjpbIjExNDA2NDQ1NjA3NjcyNTgyNTk5NCJdLCJlbWFpbCI6WyJzYXRpc2gucGF0ZWxAc3VjY2Vzc2l2ZS50ZWNoIl19LCJzaWduX2luX3Byb3ZpZGVyIjoiZ29vZ2xlLmNvbSJ9fQ.DpVXXz9PmrgQTdJbDonthbcjLKJ0lh5UBz934UwdWZtqEnZDM3FdXGbxrT6cTdAmgbi4ZLEYhpM0171ps7UbKX5pNqpQv0_1E04vMslyOBry1SM04iG9LXL-9l1uViYXNWmxIcSqxToKV2_QMRaTHoAJlS9fHPd6tDQKkidWYPLaRkniAm9ozWXauF51V6d941Jzv3D1R3Jv4nt24KtjlH5I1lu5UK4V2ySqwe4fLTH6GnFCedBCoAaI1PvQTH3uywdZBC4JdLlYzs6Xn1BvftBLuB1Y7e4bo0SWLfuDghEEsQw5gJBTyOJVBlI1ySxjn4B4oew9rlK4c2OV9pe8yQ"
         axios.post(baseURL, data, {
             headers: { "Authorization": tokenStr },
 
         }).then((response) => {
             console.log('create client response : ', response);
+            handleClose();
         });
     };
 
@@ -133,30 +185,50 @@ const AddClientDialog = (props) => {
                     New Client Details
                 </BootstrapDialogTitle>
                 <DialogContent dividers>
-                    {/* <ImageList sx={{ width: 500, height: 450 }} cols={3} rowHeight={164}>
-                                <ImageListItem key={'https://images.unsplash.com/photo-1551963831-b3b1ca40c98e'}>
-                                    <img
-                                        src={`https://images.unsplash.com/photo-1551963831-b3b1ca40c98e?w=164&h=164&fit=crop&auto=format`}
-                                        srcSet={`https://images.unsplash.com/photo-1551963831-b3b1ca40c98e?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
-                                        alt={'title'}
-                                        loading="lazy"
-                                    />
-                                </ImageListItem>
-                            </ImageList> */}
+                    <div className={classes.root}>
+                        <input
+                            accept="image/*"
+                            className={classes.input}
+                            id="avatar-upload"
+                            type="file"
+                            onChange={handleAvatarChange}
+                        />
+                        <Avatar
+                            sx={{ border: '0.1px solid lightgray', margin: 2, bgcolor: 'white', width: '125px', height: '125px', }}
+                            // className={classes.avatar}
+                            alt="My Avatar"
+                            src={avatar}
+
+                        >
+                            <label htmlFor="avatar-upload">
+                                <IconButton
+                                    sx={{
+                                        marginRight: 5,
+                                        marginTop: 3
+                                    }}
+                                    color="primary" aria-label="upload picture" component="span">
+                                    <PhotoCameraIcon sx={{ color: 'black' }} />
+                                </IconButton>
+                            </label>
+                        </Avatar>
+                    </div>
                     <TextField
                         required
                         margin="normal"
-                        id="name"
+                        id="firstName"
                         name="firstName"
                         label="First Name"
                         type="text"
+                        helperText={getError('firstName')}
+                        error={!!getError('firstName')}
                         onChange={(event) => handleChange(event, 'firstName')}
+                        onBlur={() => isTouched('firstName')}
                         fullWidth
                     />
                     <TextField
                         autoFocus
                         margin="normal"
-                        id="name"
+                        id="middleName"
                         name="middleName"
                         label="Middle Name"
                         type="text"
@@ -166,37 +238,47 @@ const AddClientDialog = (props) => {
                     <TextField
                         required
                         margin="normal"
-                        id="name"
+                        id="lastName"
                         label="Last Name"
                         name="lastName"
                         type="text"
+                        helperText={getError('lastName')}
+                        error={!!getError('lastName')}
                         onChange={(event) => handleChange(event, 'lastName')}
+                        onBlur={() => isTouched('lastName')}
                         fullWidth
                     />
                     <TextField
                         required
                         margin="normal"
-                        id="name"
+                        id="designation"
                         label="Designation"
                         name="designation"
                         type="text"
+                        helperText={getError('designation')}
+                        error={!!getError('designation')}
                         onChange={(event) => handleChange(event, 'designation')}
+                        onBlur={() => isTouched('designation')}
                         fullWidth
                     />
                     <TextField
                         required
                         margin="normal"
-                        id="name"
+                        id="email"
+                        defaultValue=""
                         label="Email"
                         name="email"
                         type="email"
+                        helperText={getError('email')}
+                        error={!!getError('email')}
                         onChange={(event) => handleChange(event, 'email')}
+                        onBlur={() => isTouched('email')}
                         fullWidth
                     />
                 </DialogContent>
                 <DialogActions>
                     <Button variant="outlined" onClick={handleClose}>Cancel</Button>
-                    <Button variant="contained" onClick={(e) => handleSubmit(dialogData)}>Submit</Button>
+                    <Button variant="contained" disabled={hasErrors()} onClick={() => handleSubmit()}>Submit</Button>
                 </DialogActions>
             </Dialog>
         </>

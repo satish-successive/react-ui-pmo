@@ -48,6 +48,7 @@ import Step2 from './Step2';
 import Step3 from './Step3';
 import FirsComp from './FirsComp';
 import SecondComp from './SecondComp';
+import axios from 'axios';
 
 import { multiStepContext } from '../StepContext';
 
@@ -129,7 +130,7 @@ const ProjectInitiation = () => {
     const [isStep3Completed, setIsStep3Completed] = React.useState(false);
 
 
-    const { currentStep, setCurrentStep, setUserData, finalData } = useContext(multiStepContext);
+    const { currentStep, setCurrentStep, setUserData, userData } = useContext(multiStepContext);
 
     const handleNext = () => {
 
@@ -272,6 +273,134 @@ const ProjectInitiation = () => {
     //         </StepLabel>
     //     </Step>
     // }
+
+    // {
+    //     "project_name": "project name",
+    //     "company_name": "company",
+    //     "company_address": "address",
+    //     "project_domain": [
+    //         2
+    //     ],
+    //     "billing_type": 1,
+    //     "approved_hours": "80",
+    //     "project_components": "[1]",
+    //     "maximum_hours_billed": null,
+    //     "initiation_date": "2023-04-06",
+    //     "status": "1",
+    //     "project_manager_id": [
+    //         1
+    //     ],
+    //     "account_manager_id": [
+    //         1
+    //     ],
+    //     "technologies": [],
+    //     "estimated_timeline_to": "2023-04-06",
+    //     "estimated_timeline_from": "2023-03-24",
+    //     "client_detail": "[{\"full_name\":\"test123 test123 tets\",\"address\":\"test90@gmail.com\"}]",
+    //     "project_type_id": 1,
+    //     "gov_category_id": 1,
+    //     "subProject": false,
+    //     "parent_id": [],
+    //     "lifecycle_model_id": 1,
+    //     "state": "Adrar",
+    //     "country": "Algeria",
+    //     "billing_interval": 0,
+    //     "project_id": "cd8cade5-9b47-4be8-84f4-62715c3871a6",
+    //     "billing_medium": 1,
+    //     "project_summary": "summary",
+    //     "primary_technologies": [
+    //         110
+    //     ],
+    //     "secondary_technologies": [
+    //         5
+    //     ],
+    //     "project_category_id": null,
+    //     "project_sow": 0
+    // }
+
+    const submitFinalData = () => {
+
+        // const {
+        //     state = '',
+        //     company: company_name = '',
+        //     country = '',
+        //     client: client_detail = [],
+        //     address: company_address = '',
+        //     projectName: project_name = '',
+        //     phase: [],
+        //     projectType: '',
+        //     governanceModel: '',
+        //     projectLifeCycleModel: [],
+        //     projectDomain: project_domain = [],
+        //     parameters: [],
+        //     addSubProject: [],
+        //     primaryTeckStack: primary_technologies = [],
+        //     secondaryTeckStack: secondary_technologies = [],
+        //     accountManagers: [],
+        //     projectManagers: [],
+        //     sowYes: false,
+        //     sowNo: false,
+        //     summary: project_summary = '',
+        //     startDate: estimated_timeline_to = '',
+        //     endDate: estimated_timeline_from'',
+        //     noOfDays: '',
+        //     totalApprovedHours: approved_hours='',
+        //     redmin: false,
+        //     zira: false,
+        //     tracker: false,
+        //     monthly: false,
+        //     hourly: false,
+        //     fortnightly: false,
+        //     // subProject= false,
+        //     // billing_type: 1,
+        // } = userData;
+
+        // const requestPayload = {
+        //     'project_name': requestData.project_name,
+        //     'company_name': requestData.company_name,
+        //     'company_address': requestData.company_address,
+        //     'project_domain': requestData.project_domain,
+        //     'billing_type': requestData.billing_type,
+        //     'approved_hours': requestData.approved_hours,
+        //     'project_components': JSON.stringify(requestData.project_components),
+        //     'maximum_hours_billed': requestData.maximum_hours_billed,
+        //     'initiation_date': requestData.initiation_date,
+        //     'status': '1',
+        //     'project_documents_link': JSON.stringify(requestData.project_documents_link),
+        //     'project_manager_id': requestData.project_manager_id,
+        //     'account_manager_id': requestData.account_manager_id,
+        //     'technologies': requestData.technologies,
+        //     'estimated_timeline_to': requestData.estimated_timeline_to,
+        //     'estimated_timeline_from': requestData.estimated_timeline_from,
+        //     'client_detail': JSON.stringify(requestData.client_detail),
+        //     'project_type_id': requestData.project_type_id,
+        //     'gov_category_id': requestData.gov_category_id,
+        //     'subProject': requestData.subProject,
+        //     'parent_id': requestData.parent_id,
+        //     'lifecycle_model_id': requestData.lifecycle_model_id,
+        //     'state': requestData.companyState,
+        //     'country': requestData.companyCountry,
+        //     'billing_interval': requestData.billing_interval,
+        //     'project_id': requestData.project_id,
+        //     'billing_medium': requestData.billing_medium,
+        //     'project_summary': requestData.project_summary,
+        //     'primary_technologies': requestData.primary_technologies,
+        //     'secondary_technologies': requestData.secondary_technologies,
+        //     'project_category_id':requestData.project_category_id,
+        //     'project_sow':requestData.project_sow
+        //   }
+
+
+        // const baseURL = "https://test.resource-api.writso.com/v1/client";
+        // let tokenStr = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlOTczZWUwZTE2ZjdlZWY0ZjkyMWQ1MGRjNjFkNzBiMmVmZWZjMTkiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU2F0aXNoIEt1bWFyIFBhdGVsIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FHTm15eGJSMkJEZEV6RGtwVTZNbzhralFGUGNnd1VxZUFSTkJYSVd0VW5sPXM5Ni1jIiwiaXNzIjoiaHR0cHM6Ly9zZWN1cmV0b2tlbi5nb29nbGUuY29tL3Jlc291cmNlLWF2YWlhYmlsaXR5IiwiYXVkIjoicmVzb3VyY2UtYXZhaWFiaWxpdHkiLCJhdXRoX3RpbWUiOjE2Nzk2NTkwMTIsInVzZXJfaWQiOiJod1RabzlCdE5PYUFZc2hZM1BORGFWMFZpd28yIiwic3ViIjoiaHdUWm85QnROT2FBWXNoWTNQTkRhVjBWaXdvMiIsImlhdCI6MTY3OTY1OTAxMiwiZXhwIjoxNjc5NjYyNjEyLCJlbWFpbCI6InNhdGlzaC5wYXRlbEBzdWNjZXNzaXZlLnRlY2giLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJnb29nbGUuY29tIjpbIjExNDA2NDQ1NjA3NjcyNTgyNTk5NCJdLCJlbWFpbCI6WyJzYXRpc2gucGF0ZWxAc3VjY2Vzc2l2ZS50ZWNoIl19LCJzaWduX2luX3Byb3ZpZGVyIjoiZ29vZ2xlLmNvbSJ9fQ.e3f3U9091HibxwA_g67oWJmOHTOrfkCGVYk0tdYR37ueUYNehNKottRt5IvhGZbOhTZuUCesSit6X22gatpf3W8JJ_4zE2SyKwJxeqNF5F1uxpMRCX9XuHlOb9xinTHVeYNdW_yN8hMOE7BHWRZP1Eh-yKSE7_lrnpKr-lpncxarqlxal5oCTUcFSCb6Hppfa-YZwfaa_D_rIKnKw9okSAC_fjEpd2EV4FojISvruz3LMpT8_U4Vy0psQPzUrC727uBOrO6Y1l8tpVJ9QG7V9Yz5SbppFCfrTU78vNggVfsLb_5c0PuUotyPAIQC7s9xlqG6kpt7PWe8J5L7_KxXpA"
+        // axios.post(baseURL, data, {
+        //     headers: { "Authorization": tokenStr },
+
+        // }).then((response) => {
+        //     console.log('create client response : ', response);
+        //     handleClose();
+        // });
+    };
 
     return (
         <div>
@@ -419,14 +548,25 @@ const ProjectInitiation = () => {
                             Back
                         </Button>
                     )}
-                    <Button
-                        onClick={handleNext}
-                        variant="contained"
-                        endIcon={currentStep !== steps.length ? <East /> : ''}
-                        sx={{ m: 2 }}
-                    >
-                        {currentStep === steps.length ? 'Submit' : 'Continue'}
-                    </Button>
+                    {currentStep === steps.length ? (
+                        <Button
+                            onClick={() => submitFinalData()}
+                            variant="contained"
+                            // endIcon={currentStep !== steps.length ? <East /> : ''}
+                            sx={{ m: 2 }}
+                        >
+                            Submit
+                        </Button>
+                    ) :
+                        <Button
+                            onClick={handleNext}
+                            variant="contained"
+                            endIcon={<East />}
+                            sx={{ m: 2 }}
+                        >
+                            Continue
+                        </Button>
+                    }
                 </Box>
             </Paper>
 
