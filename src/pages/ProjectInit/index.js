@@ -7,17 +7,8 @@ import {
     Button,
     Typography,
     Paper,
-    BottomNavigation,
-    Container,
-    Grid,
     Chip,
-    Card,
-    CardActionArea,
-    CardHeader,
-    IconButton,
-    CardContent,
     CssBaseline,
-    OutlinedInput,
     MenuItem,
     FormControl,
     InputLabel,
@@ -34,7 +25,6 @@ import {
     PermIdentityOutlined,
     RestorePageOutlined,
     AlarmOnOutlined,
-    RestoreIcon,
     ArrowForwardIos,
     Refresh
 } from '@mui/icons-material';
@@ -43,11 +33,13 @@ import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector
 
 
 import clsx from 'clsx';
-import Step1 from './Step1';
-import Step2 from './Step2';
-import Step3 from './Step3';
+import CompanyInformation from './CompanyInformation/index';
+import ProjectOverAllSummary from './ProjectOverAllSummary/index';
+import TimelineAndFunding from './TimelineAndFunding/index';
+import axios from 'axios';
+import { configuration, tokenStr } from '../../configs/configuration';
 
-import { multiStepContext } from '../StepContext';
+import { multiStepContext } from '../../store/StepContext';
 
 const steps = [
     { step: 'Step1', detailStep: 'Client Information', chipLable: 'success', chipColor: 'success' },
@@ -61,23 +53,10 @@ const MenuProps = {
     PaperProps: {
         style: {
             maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-            width: 250,
+            width: '150px',
         },
     },
 };
-
-const names = [
-    'Oliver Hansen',
-    'Van Henry',
-    'April Tucker',
-    'Ralph Hubbard',
-    'Omar Alexander',
-    'Carlos Abbott',
-    'Miriam Wagner',
-    'Bradley Wilkerson',
-    'Virginia Andrews',
-    'Kelly Snyder',
-];
 
 const QontoConnector = styled(StepConnector)(({ theme }) => ({
     [`&.${stepConnectorClasses.alternativeLabel}`]: {
@@ -102,7 +81,7 @@ const QontoConnector = styled(StepConnector)(({ theme }) => ({
     },
 }));
 
-const FirsComp = () => {
+const ProjectInitiation = () => {
     const useStyles = makeStyles(() => ({
         root: {
             height: '30px',
@@ -125,9 +104,10 @@ const FirsComp = () => {
     const [isStep1Completed, setIsStep1Completed] = React.useState(false);
     const [isStep2Completed, setIsStep2Completed] = React.useState(false);
     const [isStep3Completed, setIsStep3Completed] = React.useState(false);
+    const [draftData, setDraftData] = React.useState([]);
 
 
-    const { currentStep, setCurrentStep, setUserData, finalData } = useContext(multiStepContext);
+    const { currentStep, setCurrentStep, setUserData, userData } = useContext(multiStepContext);
 
     const handleNext = () => {
 
@@ -262,17 +242,29 @@ const FirsComp = () => {
 
     console.log('currentStep : ', currentStep)
 
-    // const returnStep = (obj, labelProps) => {
-    //     return <Step key={obj.step}>
-    //         <StepLabel
-    //             StepIconComponent={CustomStepIcon}
-    //             {...labelProps}>{obj.step}
-    //         </StepLabel>
-    //     </Step>
-    // }
+    const submitFinalData = () => {
+
+        // axios.post(baseURL, data, {
+        //     headers: { "Authorization": tokenStr },
+
+        // }).then((response) => {
+        //     console.log('create client response : ', response);
+        //     handleClose();
+        // });
+    };
+
+    useEffect(() => {
+        axios.get(`${configuration.resourceUrl}/project-type`, {
+            headers: { "Authorization": tokenStr },
+
+        }).then((response) => {
+            setDraftData(response?.data?.data);
+            console.log('response : ', response);
+        });
+    }, []);
 
     return (
-        <>
+        <div>
             <Box sx={{ pb: 15, width: '100%' }}>
                 <CssBaseline />
                 <Box sx={{ display: 'flex', m: 1, mt: 4, mb: 5 }}>
@@ -289,11 +281,17 @@ const FirsComp = () => {
                             value={age}
                             label="Draft"
                             onChange={handleChange}
-                            sx={{ height: '38px', width: '120px' }}
+                            sx={{ height: '38px', width: '150px' }}
+                            MenuProps={MenuProps}
                         >
-                            <MenuItem value="draft">
-                                Draft
-                            </MenuItem>
+                            {draftData.map((itm, i) => (
+                                <MenuItem
+                                    key={i}
+                                    value={itm.project_name}
+                                >
+                                    {itm.project_name}
+                                </MenuItem>
+                            ))}
                         </Select>
                     </FormControl>
                     <Box sx={{ display: 'flex', mb: 1 }}>
@@ -393,18 +391,54 @@ const FirsComp = () => {
                     </Step>
                 </Stepper>
                 {currentStep === 1 && (
-                    <Step1 />
+                    <CompanyInformation />
                 )}
                 {currentStep === 2 && (
-                    <Step2 />
+                    <ProjectOverAllSummary />
                 )}
                 {currentStep === 3 && (
-                    <Step3 />
+                    <TimelineAndFunding />
                 )}
 
             </Box>
-        </>
+
+            <Paper style={{ backgroundColor: '#fafafa', zIndex: 1 }} sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: '80px' }} elevation={5}>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: "flex-end" }}>
+                    {currentStep !== 1 && (
+                        <Button
+                            variant="outlined"
+                            startIcon={<West />}
+                            disabled={currentStep === 0}
+                            onClick={handleBack}
+                            sx={{ m: 2, mr: 1 }}
+                        >
+                            Back
+                        </Button>
+                    )}
+                    {currentStep === steps.length ? (
+                        <Button
+                            onClick={() => submitFinalData()}
+                            variant="contained"
+                            // endIcon={currentStep !== steps.length ? <East /> : ''}
+                            sx={{ m: 2 }}
+                        >
+                            Submit
+                        </Button>
+                    ) :
+                        <Button
+                            onClick={handleNext}
+                            variant="contained"
+                            endIcon={<East />}
+                            sx={{ m: 2 }}
+                        >
+                            Continue
+                        </Button>
+                    }
+                </Box>
+            </Paper>
+
+        </div>
     );
 }
 
-export default FirsComp;
+export default ProjectInitiation;

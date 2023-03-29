@@ -4,7 +4,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-import StepContext from './StepContext';
+import StepContext from './store/StepContext';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

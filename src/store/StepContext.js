@@ -1,14 +1,14 @@
 import React, { useState } from "react";
-import App from './App';
+import App from '../App';
 
 export const multiStepContext = React.createContext();
 
 const StepContext = () => {
     const [currentStep, setCurrentStep] = useState(1);
     const [userData, setUserData] = useState({
-        state: '',
-        company: '',
-        country: '',
+        state: [],
+        company: [],
+        country: [],
         client: [],
         address: '',
         projectName: '',

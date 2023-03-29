@@ -2,40 +2,23 @@ import React, { useState, useContext } from 'react';
 import dayjs from 'dayjs';
 import {
     Box,
-    Stepper,
-    Step,
-    StepLabel,
-    Button,
-    InputLabel,
     TextField,
-    Select,
-    OutlinedInput,
-    MenuItem,
-    Typography,
     FormControl,
     FormLabel,
-    Grid,
     RadioGroup,
     FormControlLabel,
     Radio,
-    Chip,
     Divider
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import Textarea from '@mui/joy/Textarea';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import DeleteIcon from '@mui/icons-material/Delete';
-import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
-import moment from 'moment';
 
-import { projectInitiaonMock } from './mock';
-import { multiStepContext } from '../StepContext';
+import { projectInitiaonMock } from '../../../constant/mock';
+import { multiStepContext } from '../../../store/StepContext';
 
-const Step3 = () => {
+const TimelineAndFunding = () => {
     const { phaseData } = projectInitiaonMock;
     const theme = useTheme();
 
@@ -144,29 +127,35 @@ const Step3 = () => {
                 <Box
                     component="form"
                     sx={{
-                        '& .MuiTextField-root': { m: 1, mt: 3, width: '23.5%' },
+                        '& .MuiTextField-root': { m: 1, width: '100%' },
                     }}
                     noValidate
                     autoComplete="off"
                 >
-                    <TextField
-                        required
-                        id="full-width-text-field"
-                        label="Number of days"
-                        placeholder="0000"
-                        value={userData.noOfDays}
-                        onChange={(event) => handleInputChange(event, 'noOfDays')}
+                    <FormControl sx={{ width: '20%', mt: 3 }} required>
+                        <span style={{ fontWeight: 'bold', marginLeft: 10 }} id="full-width-days-field">Number of days *</span>
+                        <TextField
+                            required
+                            id="full-width-days-field"
+                            // label="Number of days"
+                            placeholder="Days"
+                            value={userData.noOfDays}
+                            onChange={(event) => handleInputChange(event, 'noOfDays')}
 
-                    />
-                    <TextField
-                        required
-                        id="full-width-text-field"
-                        label="Total Approved Hours"
-                        placeholder="0000"
-                        value={userData.totalApprovedHours}
-                        onChange={(event) => handleInputChange(event, 'totalApprovedHours')}
+                        />
+                    </FormControl>
+                    <FormControl sx={{ width: '20%', mt: 3, ml: 3 }} required>
+                        <span style={{ fontWeight: 'bold', marginLeft: 10 }} id="full-width-hours-field">Total Approved Hours *</span>
+                        <TextField
+                            required
+                            id="full-width-hours-field"
+                            // label="Total Approved Hours"
+                            placeholder="Approved Hours"
+                            value={userData.totalApprovedHours}
+                            onChange={(event) => handleInputChange(event, 'totalApprovedHours')}
 
-                    />
+                        />
+                    </FormControl>
                 </Box>
 
                 <Divider sx={{ mt: 3, mb: 3 }} variant="middle" />
@@ -180,7 +169,9 @@ const Step3 = () => {
                     autoComplete="off"
                 >
                     <FormControl sx={{ m: 1, mt: 1, width: '48%' }} required>
-                        <FormLabel id="demo-row-radio-buttons-group-label">Project Billing</FormLabel>
+                        <FormLabel
+                            sx={{ fontWeight: "bold", color: "black" }}
+                            id="demo-row-radio-buttons-group-label">Project Billing</FormLabel>
                         <RadioGroup
                             row
                             aria-labelledby="demo-row-radio-buttons-group-label"
@@ -231,7 +222,9 @@ const Step3 = () => {
                         </RadioGroup>
                     </FormControl>
                     <FormControl sx={{ m: 1, mt: 1, width: '48%' }} required>
-                        <FormLabel id="demo-row-radio-buttons-group-label">Billing Frequency</FormLabel>
+                        <FormLabel
+                            sx={{ fontWeight: "bold", color: "black" }}
+                            id="demo-row-radio-buttons-group-label">Billing Frequency</FormLabel>
                         <RadioGroup
                             row
                             aria-labelledby="demo-row-radio-buttons-group-label"
@@ -287,4 +280,4 @@ const Step3 = () => {
     );
 }
 
-export default Step3;
+export default TimelineAndFunding;

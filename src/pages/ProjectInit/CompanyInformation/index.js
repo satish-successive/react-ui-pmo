@@ -1,63 +1,36 @@
 import React, { useState, useContext, useEffect, useMemo } from 'react';
 import {
     Box,
-    Stepper,
-    Step,
-    StepLabel,
     Button,
-    InputLabel,
     TextField,
     Select,
-    OutlinedInput,
     MenuItem,
     Typography,
     FormControl,
     FormLabel,
-    Grid,
-    RadioGroup,
-    FormControlLabel,
-    Radio,
     Chip,
     Divider,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogContentText,
-    DialogActions,
     Avatar,
-    CardHeader,
-    FormHelperText,
     InputAdornment,
     ListSubheader,
-    Tooltip
+    Tooltip,
+    Paper,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import Textarea from '@mui/joy/Textarea';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
-import DeleteIcon from '@mui/icons-material/Delete';
-import PlusOneIcon from '@mui/icons-material/PlusOne';
 import SearchIcon from "@mui/icons-material/Search";
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
-import { styled } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
-import { deepOrange, deepPurple } from '@mui/material/colors';
-import CloseIcon from '@mui/icons-material/Close';
-import {
-    IconFlagTR,
-    IconFlagIN,
-    IconFlagUS
-} from 'material-ui-flags';
-import ImageList from '@mui/material/ImageList';
-import ImageListItem from '@mui/material/ImageListItem';
+import { deepOrange } from '@mui/material/colors';
 import axios from 'axios';
 import CancelIcon from '@mui/icons-material/Cancel';
 
-import { projectInitiaonMock } from './mock';
-import { multiStepContext } from '../StepContext';
-import AddClientDialog from './AddClientDialog';
-import CountryData from '../helper/countryData'
-import useAxiosAPI from '../helper/step1Hook';
-import ClientDialog from './dialog/ClientDialog';
+import { projectInitiaonMock } from '../../../constant/mock';
+import { multiStepContext } from '../../../store/StepContext';
+import AddClientDialog from '../../../components/AddClientDialog';
+import CountryData from '../../../constant/countryData';
+import { useAxiosGetAPI } from '../../../utils/helper/step1Hook';
+import { configuration, tokenStr } from '../../../configs/configuration';
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -69,28 +42,9 @@ const MenuProps = {
         },
     },
 };
-const names = [
-    'Oliver Hansen',
-    'Van Henry',
-    'April Tucker',
-    'Ralph Hubbard',
-    'Omar Alexander',
-    'Carlos Abbott',
-    'Miriam Wagner',
-    'Bradley Wilkerson',
-    'Virginia Andrews',
-    'Kelly Snyder',
-];
-
 const containsText = (text, searchText) =>
     text.toLowerCase().indexOf(searchText.toLowerCase()) > -1;
 
-function getStyles(name, personName, theme) {
-    // console.log('name : ', name)
-    return {
-        fontWeight: theme.typography.fontWeightMedium,
-    };
-}
 const commonStyles = {
     bgcolor: 'background.paper',
     borderColor: 'text.primary',
@@ -99,40 +53,34 @@ const commonStyles = {
     width: '33px',
     height: '35px',
 };
-const Step1 = (props) => {
+const ClientInformation = (props) => {
     const { phaseData } = projectInitiaonMock;
     const theme = useTheme();
 
     const { userData, setUserData } = useContext(multiStepContext);
     const [openDialog, setOpenDialog] = useState(false);
-    // const [getClientListData, setGetClientListData] = useState([]);
-    const [hasError, setHasError] = useState(false);
-    const [stateData, setSetStateData] = useState([]);
     const [searchText, setSearchText] = useState("");
-    const [isToolpitOpen, setIsToolpitOpen] = React.useState(false);
+    const [isToolpitOpen, setIsToolpitOpen] = useState(false);
 
     const handleChange = (event, key) => {
-        console.log(event, key);
         const {
             target: { value },
         } = event;
+
+        console.log('bbbbbbbbbbb : ', value)
         setUserData((prevState) => {
             return ({
                 ...prevState,
                 [key]: value,
             });
         });
-        // if (!value.length) {
-        //     setHasError(true);
-        // }
     };
 
     const handleDelete = (e, val) => {
-        console.log('valvalval : ', e, val)
         const filteredArray = userData.client.filter(e => e !== val)
         setUserData({
             ...userData,
-            ['client']: filteredArray
+            'client': filteredArray
         });
 
     };
@@ -145,18 +93,10 @@ const Step1 = (props) => {
         setOpenDialog(false);
     };
 
-    const baseURL = "https://test.resource-api.writso.com/v1/client";
-    let tokenStr = "eyJhbGciOiJSUzI1NiIsImtpZCI6Ijk3OWVkMTU1OTdhYjM1Zjc4MjljZTc0NDMwN2I3OTNiN2ViZWIyZjAiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiU2F0aXNoIEt1bWFyIFBhdGVsIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FHTm15eGJSMkJEZEV6RGtwVTZNbzhralFGUGNnd1VxZUFSTkJYSVd0VW5sPXM5Ni1jIiwiaXNzIjoiaHR0cHM6Ly9zZWN1cmV0b2tlbi5nb29nbGUuY29tL3Jlc291cmNlLWF2YWlhYmlsaXR5IiwiYXVkIjoicmVzb3VyY2UtYXZhaWFiaWxpdHkiLCJhdXRoX3RpbWUiOjE2Nzk4MjgyNjAsInVzZXJfaWQiOiJod1RabzlCdE5PYUFZc2hZM1BORGFWMFZpd28yIiwic3ViIjoiaHdUWm85QnROT2FBWXNoWTNQTkRhVjBWaXdvMiIsImlhdCI6MTY3OTgyODI2MCwiZXhwIjoxNjc5ODMxODYwLCJlbWFpbCI6InNhdGlzaC5wYXRlbEBzdWNjZXNzaXZlLnRlY2giLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJnb29nbGUuY29tIjpbIjExNDA2NDQ1NjA3NjcyNTgyNTk5NCJdLCJlbWFpbCI6WyJzYXRpc2gucGF0ZWxAc3VjY2Vzc2l2ZS50ZWNoIl19LCJzaWduX2luX3Byb3ZpZGVyIjoiZ29vZ2xlLmNvbSJ9fQ.SF_n1TEgOpHdjEqdPwek9TcPPd63SCx_LarQtbMMBaeB0A0iOr7SYs7V36w82m2nK8NzMO67N4pZwrSEFSsCo-d99oVWfuQpTbOqB28ISuv26ufM5WfKfrh0ICvWLyq74v5JeU83N_Hp7OfVyvB52WbfS0P2lhXydqR7Lw4INtvRZYsFVsgvko8wvTVebTqgmjo-3OvwEe6fk6BmCX4euGZqUwsQorNDYVocgH16WNw6NHb7u0Almims56vfm5EQ6jyBbIqYnvWT6QDd-QKHEUktC5njfuFM7L-zd26wQamy6Nfa1PgfsAlYZfrqK2373kuF7TNdP37RxTHl0cJ32w"
-
-    const { getClientListData, getClientListDataError } = useAxiosAPI(
-        baseURL,
+    const { stepData: getClientListData, apiResponseError: getClientListDataError } = useAxiosGetAPI(
+        `${configuration.resourceUrl}/client`,
         { headers: { "Authorization": tokenStr } }
     );
-    /*useEffect(async () => {
-        await axios.get(baseURL, { headers: { "Authorization": tokenStr } }).then((response) => {
-            setGetClientListData(response?.data?.data);
-        })
-    }), [];*/
 
     /*useEffect(() => {
         try {
@@ -174,6 +114,45 @@ const Step1 = (props) => {
         }
     }, [userData.country.countryName]);*/
 
+    // const { stepData: getClientDetails, apiResponseError: getClientDetailsError } = useAxiosGetAPI(
+    //     `${baseURL}/get-company-from-client?id[]=${userData.client[0]?.id}`,
+    //     { headers: { "Authorization": tokenStr } }
+    // );
+
+    useEffect(() => {
+        try {
+            if (userData.client[0]?.id) {
+                axios
+                    .get(`${configuration.resourceUrl}/get-company-from-client?id[]=${userData.client[0]?.id}`, { headers: { "Authorization": tokenStr } })
+                    .then((response) => {
+                        setUserData({
+                            ...userData,
+                            'company': response.data.data.company_name,
+                            'country': CountryData.filter((itm) => itm.countryName === response.data.data.company_name[0]?.country),
+                            'address': response.data.data.company_name[0]?.company_address,
+                            'state': CountryData.filter((itm, i) => itm.regions[i].name === response.data.data.company_name[0]?.state),
+                        })
+                    })
+            }
+        } catch (error) {
+            console.log('erro-----------> : ', error);
+        }
+    }, [userData.client[0]?.id]);
+
+    // useEffect(() => {
+    //     try {
+    //         if (userData.client[0]?.id !== null) {
+    //             // getClientDetailsFun(userData.client[0]?.id);
+    //             // setUserData({
+    //             //     ...userData,
+    //             //     ['country']:
+    //             // })
+    //         }
+    //     } catch (e) {
+    //         return [];
+    //     }
+    // }, []);
+
 
     const displayedOptions = useMemo(
         () => getClientListData?.length && getClientListData.filter((option) => {
@@ -189,11 +168,8 @@ const Step1 = (props) => {
         setIsToolpitOpen(true);
     };
 
-    const showToolpitOnClick = () => {
-        return (
-            <TextField></TextField>
-        )
-    }
+    console.log('sfssss : ', userData)
+    console.log('userData : ', userData.state)
 
     return (
         <>
@@ -201,13 +177,13 @@ const Step1 = (props) => {
                 <Box
                     component="form"
                     sx={{
-                        '& .MuiTextField-root': { m: 1, width: '48%' },
+                        '& .MuiTextField-root': { m: 1, width: '100%' },
                     }}
                     noValidate
                     autoComplete="off"
                 >
                     <FormControl sx={{ m: 1, width: '48%' }} required>
-                        <InputLabel id="search-select-label">Client</InputLabel>
+                        <span style={{ fontWeight: 'bold' }} id="search-select-label">Client *</span>
                         <Select
                             labelId="search-select-label"
                             id="search-select"
@@ -215,57 +191,109 @@ const Step1 = (props) => {
                             value={userData.client}
                             onChange={(event) => handleChange(event, 'client')}
                             onClose={() => setSearchText("")}
-                            input={<OutlinedInput label="Client" />}
+                            placeholder="Type to search..."
+                            // input={<OutlinedInput label="Client" />}
                             MenuProps={MenuProps}
-                            IconComponent={() => userData.client.length > 0 ? (
-                                <Tooltip
+                            IconComponent={() => userData.client.length > 2 ? (
+                                <Tooltip    
                                     PopperProps={{
                                         disablePortal: true,
                                     }}
+                                    sx={{ borderColor: 'none' }}
+                                    style={{ borderColor: 'none' }}
                                     onClose={handleTooltipClose}
                                     open={isToolpitOpen}
-                                    onOpen={showToolpitOnClick}
                                     // disableHoverListener
                                     // disableTouchListener
-                                    title={showToolpitOnClick}
-                                // describeChild={showToolpitOnClick}
+                                    title={
+                                        <div style={{ borderColor: 'none' }}>
+                                            <Box
+                                                sx={{
+                                                    border: 'none',
+                                                    display: 'flex',
+                                                    margin: -2,
+                                                    flexWrap: 'wrap',
+                                                    '& > :not(style)': {
+                                                        m: 1,
+                                                        width: '300px',
+                                                        maxHeight: '800px',
+                                                    },
+                                                }}
+                                            >
+                                                <Paper elevation={3} style={{
+                                                    maxHeight: userData.client.length > 5 ? 250 : 400,
+                                                    overflow: userData.client.length > 5 ? 'auto' : ''
+                                                }}
+                                                >
+                                                    {userData.client.slice(2).map((itm) => {
+                                                        return (
+                                                            <Chip
+                                                                avatar={<Avatar
+                                                                    src='https://cdn.vuetifyjs.com/images/lists/1.jpg'
+                                                                    sx={{ mr: 1, width: 30, height: 30, bgcolor: deepOrange[400] }}
+                                                                >{itm.name}</Avatar>}
+                                                                key={itm.name}
+                                                                variant="outlined"
+                                                                clickable
+                                                                onDelete={(e) => handleDelete(e, itm)}
+                                                                deleteIcon={
+                                                                    <CancelIcon
+                                                                        onMouseDown={(event) => event.stopPropagation()}
+                                                                    />
+                                                                }
+                                                                onClick={(e) => handleDelete()}
+                                                                sx={{ border: 'none', margin: 1 }}
+                                                                label={<div>
+                                                                    <Typography sx={{ mb: -1 }}>{itm.name}</Typography>
+                                                                    <Typography variant='caption'>{itm.emails}</Typography>
+                                                                </div>}
+                                                            />)
+                                                    })}
+                                                </Paper>
+                                            </Box>
+                                        </div>
+                                    }
                                 >
                                     <IconButton
                                         onClick={handleTooltipOpen}
                                         sx={{ ...commonStyles, color: 'blue' }}
                                         size="small" variant="outlined">
-                                        <PlusOneIcon fontSize="small" />
+                                        <span style={{ fontSize: '15px' }}>{`+${userData.client.slice(2).length}`}</span>
                                     </IconButton>
                                 </Tooltip>
                             ) : ''
                             }
-                            renderValue={(selected) => (
+                            displayEmpty
+                            renderValue={(selected) => selected?.length ? (
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                    {selected?.length && selected.map((item) => (
-                                        <Chip
-                                            avatar={<Avatar
-                                                src='https://cdn.vuetifyjs.com/images/lists/1.jpg'
-                                                sx={{ width: 24, height: 24, bgcolor: deepOrange[400] }}
-                                            >N</Avatar>}
-                                            key={item.name}
-                                            variant="outlined"
-                                            clickable
-                                            onDelete={(e) => handleDelete(e, item)}
-                                            deleteIcon={
-                                                <CancelIcon
-                                                    onMouseDown={(event) => event.stopPropagation()}
-                                                />
-                                            }
-                                            onClick={(e) => handleDelete()}
-                                            sx={{ border: 'none' }}
-                                            label={<div>
-                                                <Typography sx={{ mb: -1 }}>{item.name}</Typography>
-                                                <Typography variant='caption'>{item.emails}</Typography>
-                                            </div>}
-                                        />
-                                    ))}
+                                    {
+                                        selected.slice(0, 2).map((item) => (
+                                            <Chip
+                                                avatar={<Avatar
+                                                    src='https://cdn.vuetifyjs.com/images/lists/1.jpg'
+                                                    sx={{ width: 24, height: 24, bgcolor: deepOrange[400] }}
+                                                >{item.name}</Avatar>}
+                                                key={item.name}
+                                                variant="outlined"
+                                                clickable
+                                                onDelete={(e) => handleDelete(e, item)}
+                                                deleteIcon={
+                                                    <CancelIcon
+                                                        onMouseDown={(event) => event.stopPropagation()}
+                                                    />
+                                                }
+                                                onClick={(e) => handleDelete()}
+                                                sx={{ border: 'none' }}
+                                                label={<div>
+                                                    <Typography sx={{ mb: -1 }}>{item.name}</Typography>
+                                                    <Typography variant='caption'>{item.emails}</Typography>
+                                                </div>}
+                                            />
+                                        ))
+                                    }
+
                                 </Box>
-                            )}
+                            ) : <Typography color={'GrayText'}>Select Client Name</Typography>}
                         >
                             <ListSubheader>
                                 <TextField
@@ -293,7 +321,6 @@ const Step1 = (props) => {
                                     key={i}
                                     value={option}
                                     leftIcon={<Avatar sx={{ bgcolor: deepOrange[500] }}>N</Avatar>}
-                                    style={getStyles(option.name, phaseData, theme)}
                                 >
                                     <Avatar
                                         src='https://cdn.vuetifyjs.com/images/lists/1.jpg'
@@ -311,16 +338,19 @@ const Step1 = (props) => {
                             }
                         </Select>
                     </FormControl>
-                    <TextField
-                        required
-                        id="full-width-text-field"
-                        label="Company"
-                        placeholder="Company Name"
-                        value={userData.company}
-                        onChange={(event) => handleChange(event, 'company')}
-                        margin="normal"
-                        fullWidth
-                    />
+                    <FormControl sx={{ width: '48%' }} required>
+                        <span style={{ fontWeight: 'bold', marginLeft: 5 }} id="full-width-text-field">Company *</span>
+                        <TextField
+                            required
+                            id="full-width-text-field"
+                            // label="Company"
+                            placeholder="Company Name"
+                            value={userData.company[0]?.company_name}
+                            onChange={(event) => handleChange(event, 'company')}
+                            margin="normal"
+                            fullWidth
+                        />
+                    </FormControl>
                     <Button
                         sx={{ m: 1, mt: 3, mb: 3 }}
                         variant="outlined"
@@ -341,40 +371,41 @@ const Step1 = (props) => {
                     noValidate
                     autoComplete="off"
                 >
-                    <FormControl sx={{ m: 1, width: '48%' }} required>
-                        <InputLabel id="demo-multiple-country-label">Country </InputLabel>
+                    <FormControl sx={{ m: 1, width: '48%' }}>
+                        <span style={{ fontWeight: 'bold' }} id="search-select-label">Country *</span>
+                        {/* <InputLabel id="demo-multiple-country-label">Country </InputLabel> */}
                         <Select
-                            required
                             labelId="demo-multiple-country-label"
                             id="demo-multiple-country-name"
-                            // multiple
+                            multiple
                             value={userData.country}
                             onChange={(event) => handleChange(event, 'country')}
-                            input={<OutlinedInput label="Country" />}
+                            // input={<OutlinedInput label="Country" />}
                             MenuProps={MenuProps}
-                            renderValue={(item, i) => (
+                            displayEmpty
+                            renderValue={(selected) => selected.length !== 0 ? (
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                     <Chip
                                         avatar={
                                             <Avatar
                                                 sx={{ width: 24, height: 24, bgcolor: deepOrange[400] }}
-                                                src={`https://flagcdn.com/${(item.countryShortCode).toLowerCase()}.svg`}
+                                                src={`https://flagcdn.com/${(selected[0].countryShortCode)?.toLowerCase()}.svg`}
                                             />}
-                                        key={i}
+                                        key={selected[0].countryName}
                                         variant="outlined"
                                         sx={{ border: 'none' }}
                                         label={<div>
-                                            <Typography>{item.countryName}</Typography>
+                                            <Typography>{selected[0].countryName}</Typography>
                                         </div>}
                                     />
                                 </Box>
-                            )}
+
+                            ) : <Typography color={'GrayText'}>Select Country</Typography>}
                         >
                             {CountryData?.length ? CountryData.map((itm, i) => (
                                 <MenuItem
                                     key={i}
                                     value={itm}
-                                // style={getStyles(itm.name, userData, theme)}
 
                                 >
                                     <Avatar
@@ -391,24 +422,27 @@ const Step1 = (props) => {
                         </Select>
                     </FormControl>
                     <FormControl sx={{ m: 1, width: '48%' }} required>
-                        <InputLabel id="demo-multiple-name-label">State</InputLabel>
+                        <span style={{ fontWeight: 'bold' }} id="search-state-label">State *</span>
+                        {/* <InputLabel id="demo-multiple-name-label">State</InputLabel> */}
                         <Select
-                            labelId="demo-multiple-name-label"
-                            id="demo-multiple-name"
-                            // multiple
+                            labelId="search-state-label"
+                            id="search-state"
+                            multiple
                             required
                             value={userData.state}
                             onChange={(event) => handleChange(event, 'state')}
-                            input={<OutlinedInput label="State" />}
+                            // input={<OutlinedInput label="State" />}
                             MenuProps={MenuProps}
+                            displayEmpty
+                            renderValue={userData.state !== "" ? undefined : () =>
+                                <Typography color={'GrayText'}>Select State</Typography>}
                         >
                             {
-                                userData.country?.regions?.length ?
-                                    userData.country.regions.map((item) => (
+                                userData.country[0]?.regions?.length ?
+                                    userData.country[0].regions.map((item) => (
                                         <MenuItem
                                             key={item.name}
                                             value={item}
-                                            style={getStyles(item.name, userData, theme)}
                                         >
                                             {item.name}
                                         </MenuItem>
@@ -423,7 +457,7 @@ const Step1 = (props) => {
                     </FormControl>
 
                     <FormControl sx={{ m: 1, width: '48%' }} required>
-                        <FormLabel>Address</FormLabel>
+                        <FormLabel sx={{ fontWeight: 'bold', color: 'black' }}>Address</FormLabel>
                         <Textarea
                             placeholder="Address"
                             minRows={2}
@@ -443,4 +477,4 @@ const Step1 = (props) => {
     );
 }
 
-export default Step1;
+export default ClientInformation;

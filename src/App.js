@@ -1,6 +1,5 @@
-import logo from './logo.svg';
 import './App.css';
-import { ProjectInitiation } from './project-initiation';
+import ProjectInitiation from './pages/ProjectInit';
 
 function App() {
   return (
