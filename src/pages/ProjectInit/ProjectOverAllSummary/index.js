@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 
 import {
     Box,
@@ -16,13 +16,15 @@ import {
     Checkbox,
     ListItemText,
     Paper,
-    Tooltip
+    Tooltip,
+    ListSubheader,
+    InputAdornment
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import Textarea from '@mui/joy/Textarea';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ListItemIcon from "@material-ui/core/ListItemIcon";
-import _without from "lodash/without";
+import SearchIcon from "@mui/icons-material/Search";
 import IconButton from '@mui/material/IconButton';
 import ClearIcon from '@mui/icons-material/Clear';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -33,6 +35,7 @@ import { multiStepContext } from '../../../store/StepContext';
 import { MenuProps1, useStyles } from "../../../utils/style";
 import { useAxiosGetAPI } from '../../../utils/helper/step1Hook';
 import { configuration, tokenStr } from '../../../configs/configuration';
+import { containsText } from '../../../utils/helper/helper';
 
 
 const ITEM_HEIGHT = 48;
@@ -74,6 +77,7 @@ const ProjectOverAllSummary = () => {
     const classes = useStyles();
     const [isSubProject, setIsSubProject] = useState(false);
     const [isToolpitOpen, setIsToolpitOpen] = React.useState(false);
+    const [searchText, setSearchText] = useState("");
     const { userData, setUserData } = useContext(multiStepContext);
 
     const handleChange = (event) => {
@@ -169,7 +173,12 @@ const ProjectOverAllSummary = () => {
         { headers: { "Authorization": tokenStr } }
     );
 
-    console.log('addSubProject : ', userData);
+    console.log('userData step2 : ', userData);
+    const displayedOptions = useMemo(
+        () => projectDomain?.length && projectDomain.filter((option) => {
+            return containsText(option.name, searchText)
+        })
+    );
 
     const handleSubProject = (event) => {
         const { target: { checked } } = event;
@@ -373,7 +382,37 @@ const ProjectOverAllSummary = () => {
                                 </Box>
                             ) : <Typography color={'GrayText'}>Select Project Domain</Typography>}
                         >
-                            {projectDomain?.length ? projectDomain.map((itm) => (
+                            <ListSubheader>
+                                <TextField
+                                    size="small"
+                                    autoFocus
+                                    placeholder="Type to search..."
+                                    fullWidth
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <SearchIcon />
+                                            </InputAdornment>
+                                        )
+                                    }}
+                                    onChange={(e) => setSearchText(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key !== "Escape") {
+                                            e.stopPropagation();
+                                        }
+                                    }}
+                                />
+                                {/* <div>
+                                    Create
+                                    <Chip
+                                        color='primary'
+                                        onClick={(e) => Abc(e, searchText)}
+                                        clickable
+                                        label={searchText}
+                                    />
+                                </div> */}
+                            </ListSubheader>
+                            {displayedOptions?.length ? displayedOptions.map((itm) => (
                                 <MenuItem
                                     key={itm.name}
                                     value={itm}

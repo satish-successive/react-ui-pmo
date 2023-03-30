@@ -15,6 +15,7 @@ import {
     ListSubheader,
     Tooltip,
     Paper,
+    FormHelperText,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import Textarea from '@mui/joy/Textarea';
@@ -31,6 +32,7 @@ import AddClientDialog from '../../../components/AddClientDialog';
 import CountryData from '../../../constant/countryData';
 import { useAxiosGetAPI } from '../../../utils/helper/step1Hook';
 import { configuration, tokenStr } from '../../../configs/configuration';
+import { containsText } from '../../../utils/helper/helper';
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -42,8 +44,6 @@ const MenuProps = {
         },
     },
 };
-const containsText = (text, searchText) =>
-    text.toLowerCase().indexOf(searchText.toLowerCase()) > -1;
 
 const commonStyles = {
     bgcolor: 'background.paper',
@@ -61,13 +61,15 @@ const ClientInformation = (props) => {
     const [openDialog, setOpenDialog] = useState(false);
     const [searchText, setSearchText] = useState("");
     const [isToolpitOpen, setIsToolpitOpen] = useState(false);
+    const [isToolpitChipOpen, setIsToolpitChipOpen] = useState(false);
+    const [stateData, setStateData] = useState([]);
+    const [getVal, setGetVal] = useState([]);
 
     const handleChange = (event, key) => {
         const {
             target: { value },
         } = event;
 
-        console.log('bbbbbbbbbbb : ', value)
         setUserData((prevState) => {
             return ({
                 ...prevState,
@@ -93,26 +95,27 @@ const ClientInformation = (props) => {
         setOpenDialog(false);
     };
 
-    const { stepData: getClientListData, apiResponseError: getClientListDataError } = useAxiosGetAPI(
+    const { stepData: getClientListData } = useAxiosGetAPI(
         `${configuration.resourceUrl}/client`,
         { headers: { "Authorization": tokenStr } }
     );
 
-    /*useEffect(() => {
-        try {
-            if (!userData.country.countryName) {
-                const countryStates = CountryData.find((country) => {
-                    if (country.regions.length !== 0 && country.countryName === userData.country.countryName) {
+    // useEffect(() => {
+    //     try {
+    //         if (userData.country[0]?.countryName) {
+    //             const countryStates = CountryData.filter((itm) => itm.regions)
+    //             // const countryStates = CountryData.find((country) => {
+    //             //     if (country.regions.length !== 0 && country.countryName === userData.country.countryName) {
 
-                        return country.regions;
-                    }
-                })
-                setSetStateData(countryStates.regions);
-            }
-        } catch (e) {
-            return [];
-        }
-    }, [userData.country.countryName]);*/
+    //             //         return country.regions;
+    //             //     }
+    //             // })
+    //             setStateData(countryStates);
+    //         }
+    //     } catch (e) {
+    //         return [];
+    //     }
+    // }, [userData.country.countryName]);
 
     // const { stepData: getClientDetails, apiResponseError: getClientDetailsError } = useAxiosGetAPI(
     //     `${baseURL}/get-company-from-client?id[]=${userData.client[0]?.id}`,
@@ -121,38 +124,41 @@ const ClientInformation = (props) => {
 
     useEffect(() => {
         try {
-            if (userData.client[0]?.id) {
+            const clientIds = userData.client.filter((itm) => itm.id).map(({ id }) => id);
+            if (clientIds?.length) {
                 axios
-                    .get(`${configuration.resourceUrl}/get-company-from-client?id[]=${userData.client[0]?.id}`, { headers: { "Authorization": tokenStr } })
+                    .get(`${configuration.resourceUrl}/get-company-from-client`, {
+                        headers: { "Authorization": tokenStr },
+                        params: {
+                            id: clientIds
+                        }
+                    })
                     .then((response) => {
+                        let stateData;
+                        const countryFilter = CountryData.filter((itm) => {
+                            if (itm.countryName === response.data.data.company_name[0]?.country) {
+                                return itm;
+                            }
+                        })
+                        stateData = countryFilter[0].regions.filter((itm) => {
+                            if (itm.name === response.data.data.company_name[0]?.state) {
+                                return itm;
+                            }
+                        })
                         setUserData({
                             ...userData,
-                            'company': response.data.data.company_name,
-                            'country': CountryData.filter((itm) => itm.countryName === response.data.data.company_name[0]?.country),
-                            'address': response.data.data.company_name[0]?.company_address,
-                            'state': CountryData.filter((itm, i) => itm.regions[i].name === response.data.data.company_name[0]?.state),
+                            company: response?.data?.data?.company_name[0],
+                            country: countryFilter[0],
+                            address: response.data.data.company_name[0]?.company_address,
+                            state: stateData[0],
+                            companyChipsData: response.data.data?.project_name.filter((itm) => itm.name)
                         })
                     })
             }
         } catch (error) {
             console.log('erro-----------> : ', error);
         }
-    }, [userData.client[0]?.id]);
-
-    // useEffect(() => {
-    //     try {
-    //         if (userData.client[0]?.id !== null) {
-    //             // getClientDetailsFun(userData.client[0]?.id);
-    //             // setUserData({
-    //             //     ...userData,
-    //             //     ['country']:
-    //             // })
-    //         }
-    //     } catch (e) {
-    //         return [];
-    //     }
-    // }, []);
-
+    }, [userData.client]);
 
     const displayedOptions = useMemo(
         () => getClientListData?.length && getClientListData.filter((option) => {
@@ -168,9 +174,19 @@ const ClientInformation = (props) => {
         setIsToolpitOpen(true);
     };
 
-    console.log('sfssss : ', userData)
-    console.log('userData : ', userData.state)
+    const handleTooltipChipClose = () => {
+        setIsToolpitChipOpen(false);
+    };
 
+    const handleTooltipChipOpen = () => {
+        setIsToolpitChipOpen(true);
+    };
+
+
+    console.log('userData : ', userData)
+    const Abc = (e, val) => {
+        console.log('AbcAbc : ', e.target.value, val)
+    }
     return (
         <>
             <Box sx={{ mt: 5 }}>
@@ -195,13 +211,13 @@ const ClientInformation = (props) => {
                             // input={<OutlinedInput label="Client" />}
                             MenuProps={MenuProps}
                             IconComponent={() => userData.client.length > 2 ? (
-                                <Tooltip    
+                                <Tooltip
                                     PopperProps={{
                                         disablePortal: true,
                                     }}
                                     sx={{ borderColor: 'none' }}
                                     style={{ borderColor: 'none' }}
-                                    onClose={handleTooltipClose}
+                                    onClose={() => handleTooltipClose()}
                                     open={isToolpitOpen}
                                     // disableHoverListener
                                     // disableTouchListener
@@ -244,8 +260,8 @@ const ClientInformation = (props) => {
                                                                 onClick={(e) => handleDelete()}
                                                                 sx={{ border: 'none', margin: 1 }}
                                                                 label={<div>
-                                                                    <Typography sx={{ mb: -1 }}>{itm.name}</Typography>
-                                                                    <Typography variant='caption'>{itm.emails}</Typography>
+                                                                    <Typography sx={{ mb: -1, fontSize: '14px' }}>{`${itm.name} / ${itm.designation || 'Manager'}`}</Typography>
+                                                                    <Typography sx={{ color: '#595959', fontSize: '13px' }}>{itm.emails}</Typography>
                                                                 </div>}
                                                             />)
                                                     })}
@@ -256,7 +272,7 @@ const ClientInformation = (props) => {
                                 >
                                     <IconButton
                                         onClick={handleTooltipOpen}
-                                        sx={{ ...commonStyles, color: 'blue' }}
+                                        sx={{ ...commonStyles, color: 'blue', mr: 10 }}
                                         size="small" variant="outlined">
                                         <span style={{ fontSize: '15px' }}>{`+${userData.client.slice(2).length}`}</span>
                                     </IconButton>
@@ -285,8 +301,8 @@ const ClientInformation = (props) => {
                                                 onClick={(e) => handleDelete()}
                                                 sx={{ border: 'none' }}
                                                 label={<div>
-                                                    <Typography sx={{ mb: -1 }}>{item.name}</Typography>
-                                                    <Typography variant='caption'>{item.emails}</Typography>
+                                                    <Typography sx={{ mb: -1, fontSize: '14px' }}>{`${item.name} / ${item.designation || 'Manager'}`}</Typography>
+                                                    <Typography sx={{ color: '#595959', fontSize: '13px' }}>{item.emails}</Typography>
                                                 </div>}
                                             />
                                         ))
@@ -327,8 +343,8 @@ const ClientInformation = (props) => {
                                         sx={{ mr: 1, width: 24, height: 24, bgcolor: deepOrange[400] }}
                                     >N</Avatar>
                                     <div>
-                                        <Typography sx={{ mb: -1 }}>{option.name}</Typography>
-                                        <Typography variant='caption'>{option.emails}</Typography>
+                                        <Typography sx={{ mb: -1, color: '#4d4d4d', fontSize: '14px' }}>{option.name}</Typography>
+                                        <Typography sx={{ fontWeight: 'bold', color: '#595959', fontSize: '13px' }} >{`${option.emails} | ${option.designation || 'Manager'}`}</Typography>
                                     </div>
                                 </MenuItem>
                             )) :
@@ -345,11 +361,97 @@ const ClientInformation = (props) => {
                             id="full-width-text-field"
                             // label="Company"
                             placeholder="Company Name"
-                            value={userData.company[0]?.company_name}
+                            value={userData.company?.company_name}
                             onChange={(event) => handleChange(event, 'company')}
                             margin="normal"
                             fullWidth
                         />
+                        <FormHelperText sx={{ display: 'flex', justifyContent: 'flex-end', mr: -1, mt: 0 }}>
+                            {userData.companyChipsData.length > 2 && (
+                                <Tooltip
+                                    PopperProps={{
+                                        disablePortal: true,
+                                    }}
+                                    sx={{ borderColor: 'none' }}
+                                    style={{ borderColor: 'none' }}
+                                    onClose={() => handleTooltipChipClose()}
+                                    open={isToolpitChipOpen}
+                                    // disableHoverListener
+                                    // disableTouchListener
+                                    title={
+                                        <div style={{ borderColor: 'none' }}>
+                                            <Box
+                                                sx={{
+                                                    border: 'none',
+                                                    display: 'flex',
+                                                    margin: -2,
+                                                    flexWrap: 'wrap',
+                                                    '& > :not(style)': {
+                                                        m: 1,
+                                                        // width: '250px',
+                                                        maxHeight: '800px',
+                                                    },
+                                                }}
+                                            >
+                                                <Paper elevation={3} style={{
+                                                    maxHeight: userData.companyChipsData.length > 5 ? 250 : 400,
+                                                    width: '260px',
+                                                    overflow: userData.companyChipsData.length > 5 ? 'auto' : ''
+                                                }}
+                                                >
+                                                    {userData.companyChipsData.slice(2).map((itm) => {
+                                                        return (
+                                                            <Chip
+                                                                key={itm.name}
+                                                                variant="outlined"
+                                                                sx={{ border: 'none', margin: 1 }}
+                                                                label={<div>
+                                                                    <Typography sx={{ mt: 5, m: 1 }}>{itm.name}</Typography>
+                                                                </div>}
+                                                            />)
+                                                    })}
+                                                </Paper>
+                                            </Box>
+                                        </div>
+                                    }
+                                >
+                                    <IconButton
+                                        onClick={handleTooltipChipOpen}
+                                        sx={{
+                                            ...commonStyles, color: 'blue', mt: 0,
+                                            display: userData.companyChipsData.slice(2).length > 0 ? '' : 'none',
+                                        }}
+                                        size="small" variant="outlined">
+                                        <span style={{ fontSize: '15px' }}>{`+${userData.companyChipsData.slice(2).length}`}</span>
+                                    </IconButton>
+                                </Tooltip>
+                            )
+                            }
+
+                            {userData.companyChipsData?.length && userData.companyChipsData.slice(0, 2).map((itm) => (
+                                <Chip label={itm?.name} />
+                            ))}
+                            {/* {userData.companyChipsData.length > 2 && (
+                                <IconButton
+                                onClick={handleTooltipChipOpen}
+                                sx={{
+                                    ...commonStyles, color: 'blue', mt: 0,
+                                    display: userData.companyChipsData.slice(2).length > 0 ? '' : 'none'
+                                }}
+                                size="small" variant="outlined">
+                                <span style={{ fontSize: '15px' }}>{`+${userData.companyChipsData.slice(2).length}`}</span>
+                            </IconButton>
+                            )} */}
+                            {/* <IconButton
+                                onClick={handleTooltipOpen}
+                                sx={{
+                                    ...commonStyles, color: 'blue', mt: 0,
+                                    display: userData.companyChipsData.slice(2).length > 0 ? '' : 'none'
+                                }}
+                                size="small" variant="outlined">
+                                <span style={{ fontSize: '15px' }}>{`+${userData.companyChipsData.slice(2).length}`}</span>
+                            </IconButton> */}
+                        </FormHelperText>
                     </FormControl>
                     <Button
                         sx={{ m: 1, mt: 3, mb: 3 }}
@@ -377,25 +479,25 @@ const ClientInformation = (props) => {
                         <Select
                             labelId="demo-multiple-country-label"
                             id="demo-multiple-country-name"
-                            multiple
+                            // multiple
                             value={userData.country}
                             onChange={(event) => handleChange(event, 'country')}
                             // input={<OutlinedInput label="Country" />}
                             MenuProps={MenuProps}
                             displayEmpty
-                            renderValue={(selected) => selected.length !== 0 ? (
+                            renderValue={(selected) => Object.keys(selected).length !== 0 ? (
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                     <Chip
                                         avatar={
                                             <Avatar
                                                 sx={{ width: 24, height: 24, bgcolor: deepOrange[400] }}
-                                                src={`https://flagcdn.com/${(selected[0].countryShortCode)?.toLowerCase()}.svg`}
+                                                src={`https://flagcdn.com/${(selected.countryShortCode)?.toLowerCase()}.svg`}
                                             />}
-                                        key={selected[0].countryName}
+                                        key={selected.countryName}
                                         variant="outlined"
                                         sx={{ border: 'none' }}
                                         label={<div>
-                                            <Typography>{selected[0].countryName}</Typography>
+                                            <Typography>{selected.countryName}</Typography>
                                         </div>}
                                     />
                                 </Box>
@@ -427,19 +529,19 @@ const ClientInformation = (props) => {
                         <Select
                             labelId="search-state-label"
                             id="search-state"
-                            multiple
+                            // multiple
                             required
                             value={userData.state}
                             onChange={(event) => handleChange(event, 'state')}
                             // input={<OutlinedInput label="State" />}
                             MenuProps={MenuProps}
                             displayEmpty
-                            renderValue={userData.state !== "" ? undefined : () =>
+                            renderValue={Object.keys(userData.state).length !== 0 ? undefined : () =>
                                 <Typography color={'GrayText'}>Select State</Typography>}
                         >
                             {
-                                userData.country[0]?.regions?.length ?
-                                    userData.country[0].regions.map((item) => (
+                                userData.country?.regions?.length ?
+                                    userData.country.regions.map((item) => (
                                         <MenuItem
                                             key={item.name}
                                             value={item}
